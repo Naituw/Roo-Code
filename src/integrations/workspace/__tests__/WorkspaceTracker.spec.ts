@@ -494,6 +494,37 @@ describe("WorkspaceTracker", () => {
 			}, "")
 			expect(longestPath).toBe(`dir${"/dir".repeat(LEVELS - 1)}`)
 		})
+
+		it("should handle platform-specific ripgrep paths correctly", async () => {
+			const isWindows = process.platform === "win32"
+			const mockTree = {
+				src: {
+					"file1.ts": true,
+					components: {
+						"Button.tsx": true
+					}
+				}
+			}
+
+			// Mock the ripgrep cache to return our test tree
+			mockRipgrepCache.getTree.mockResolvedValue(mockTree)
+
+			// Get the tree through WorkspaceTracker
+			const result = await workspaceTracker.getRipgrepFileTree()
+
+			// Verify the tree structure is preserved
+			expect(result).toEqual(mockTree)
+
+			// Test file notifications with platform-specific paths
+			const testPath = isWindows
+				? "C:\\test\\workspace\\src\\components\\NewFile.tsx"
+				: "/test/workspace/src/components/NewFile.tsx"
+
+			await createCallback({ fsPath: testPath })
+
+			// Verify the path is normalized before being passed to ripgrep cache
+			expect(mockRipgrepCache.fileAdded).toHaveBeenCalledWith(testPath)
+		})
 	})
 
 	describe("VSCode configuration support", () => {
