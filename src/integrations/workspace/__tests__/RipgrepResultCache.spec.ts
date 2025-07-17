@@ -337,7 +337,14 @@ describe("RipgrepResultCache", () => {
 				mockChildProcess.stdout.emit(
 					"data",
 					Buffer.from(
-						"src/file1.ts\nsrc/newfile.ts\nsrc/components/Button.tsx\nutils/helper.ts\nutils/newutil.ts\nlib/helper.ts\n",
+						`
+						src/file1.ts
+						src/newfile.ts
+						src/components/Button.tsx
+						utils/helper.ts
+						utils/newutil.ts
+						lib/helper.ts
+						`,
 					),
 				)
 				mockChildProcess.emit("close", 0)
@@ -346,7 +353,10 @@ describe("RipgrepResultCache", () => {
 			const result = await treePromise
 
 			// Should have called spawn for incremental update
-			expect(mockSpawn).toHaveBeenCalled()
+			expect(mockSpawn).toHaveBeenCalledWith("/usr/bin/rg", ["--files", "src", "utils", "lib"], {
+				cwd: "/test/workspace",
+				stdio: ["pipe", "pipe", "pipe"],
+			})
 
 			// Verify all directories are updated correctly
 			expect(result).toEqual({
@@ -382,7 +392,15 @@ describe("RipgrepResultCache", () => {
 				mockChildProcess.stdout.emit(
 					"data",
 					Buffer.from(
-						"src/file1.ts\nsrc/newfile.ts\nsrc/components/Button.tsx\nsrc/components/NewComponent.tsx\nsrc/components/ui/Button.tsx\nutils/helper.ts\nutils/newutil.ts\n",
+						`
+						src/file1.ts
+						src/newfile.ts
+						src/components/Button.tsx
+						src/components/NewComponent.tsx
+						src/components/ui/Button.tsx
+						utils/helper.ts
+						utils/newutil.ts
+						`,
 					),
 				)
 				mockChildProcess.emit("close", 0)
@@ -428,7 +446,15 @@ describe("RipgrepResultCache", () => {
 				mockChildProcess.stdout.emit(
 					"data",
 					Buffer.from(
-						"src/file1.ts\nsrc/newfile.ts\nsrc/components/Button.tsx\nutils/helper.ts\nutils/newutil.ts\nlib/helper.ts\ntests/test.ts\n",
+						`
+						src/file1.ts
+						src/newfile.ts
+						src/components/Button.tsx
+						utils/helper.ts
+						utils/newutil.ts
+						lib/helper.ts
+						tests/test.ts
+						`,
 					),
 				)
 				mockChildProcess.emit("close", 0)
@@ -526,7 +552,12 @@ describe("RipgrepResultCache", () => {
 
 			const treePromise = cache.getTree()
 			setTimeout(() => {
-				mockChildProcess.stdout.emit("data", Buffer.from("src/file1.ts\n\n\nsrc/file2.ts\n"))
+				mockChildProcess.stdout.emit("data", Buffer.from(`
+					src/file1.ts
+
+
+					src/file2.ts
+				`))
 				mockChildProcess.emit("close", 0)
 			}, 10)
 
@@ -545,7 +576,10 @@ describe("RipgrepResultCache", () => {
 
 			const treePromise = cache.getTree()
 			setTimeout(() => {
-				mockChildProcess.stdout.emit("data", Buffer.from("src/file-with-dash.ts\nsrc/file with spaces.ts\n"))
+				mockChildProcess.stdout.emit("data", Buffer.from(`
+					src/file-with-dash.ts
+					src/file with spaces.ts
+				`))
 				mockChildProcess.emit("close", 0)
 			}, 10)
 
@@ -592,7 +626,10 @@ describe("RipgrepResultCache", () => {
 
 			const treePromise = cache.getTree()
 			setTimeout(() => {
-				mockChildProcess.stdout.emit("data", Buffer.from("src/utils.ts\nsrc/utils/helper.ts\n"))
+				mockChildProcess.stdout.emit("data", Buffer.from(`
+					src/utils.ts
+					src/utils/helper.ts
+				`))
 				mockChildProcess.emit("close", 0)
 			}, 10)
 
