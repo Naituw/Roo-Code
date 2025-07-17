@@ -4,7 +4,7 @@ import WorkspaceTracker from "../WorkspaceTracker"
 import { ClineProvider } from "../../../core/webview/ClineProvider"
 import { listFiles } from "../../../services/glob/list-files"
 import { getWorkspacePath } from "../../../utils/path"
-import { RipgrepResultCache } from "../RipgrepResultCache"
+import { RipgrepResultCache, SimpleTreeNode } from "../RipgrepResultCache"
 
 // Mock functions - must be defined before vitest.mock calls
 const mockOnDidCreate = vitest.fn()
@@ -476,6 +476,23 @@ describe("WorkspaceTracker", () => {
 
 			// Since the file is ignored, fileRemoved should not be called
 			expect(mockRipgrepCache.fileRemoved).not.toHaveBeenCalled()
+		})
+
+		it("should handle deep tree to list conversion without stack overflow", async () => {
+			let deepTree: SimpleTreeNode = {}
+			let currentNode = deepTree
+			let LEVELS = 1000
+			for (let i = 0; i < LEVELS; i++) {
+				currentNode["dir"] = {}
+				currentNode = currentNode["dir"]
+			}
+			let fileList = (workspaceTracker as any).treeToFileResults(deepTree)
+			expect(fileList.length).toBe(LEVELS) // we have 1000 levels, one folder entry for each level
+
+			let longestPath = fileList.reduce((max: string, file: any) => {
+				return max.length > file.path.length ? max : file.path
+			}, "")
+			expect(longestPath).toBe(`dir${"/dir".repeat(LEVELS - 1)}`)
 		})
 	})
 
